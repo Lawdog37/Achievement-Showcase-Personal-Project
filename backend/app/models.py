@@ -28,6 +28,11 @@ class Game(Base):
     icon_url: Mapped[str | None]
     notes: Mapped[str | None]
 
+        # None = never checked, True/False = whether the game has achievements
+    has_achievements: Mapped[bool | None]
+    # When we last fetched global rarity percentages for this game
+    percentages_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone = True))
+
 class Achievement(Base):
     """Every achievement a game has, whether or not anyone unlocked it."""
 
@@ -53,6 +58,8 @@ class PlayerGame(Base):
     playtime_minutes: Mapped[int] = mapped_column(default = 0)
     last_played_at: Mapped[datetime | None] = mapped_column(DateTime(timezone = True))
 
+        # When we last fetched this player's achievements for this game
+    achievements_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone = True))
 
 class PlayerAchievement(Base):
     """One row per achievement UNLOCKED, No row = still locked."""

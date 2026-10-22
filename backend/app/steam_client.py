@@ -1,22 +1,60 @@
-"""Steam web API calls"""
+"""Every call to the Steam Web API lives here."""
+
+import logging
+import time
 
 import httpx
 
 from app.config import STEAM_API_KEY
 
+logger = logging.getLogger(__name__)
+
 BASE_URL = "https://api.steampowered.com"
+MAX_ATTEMPTS = 4
+RETRY_STATUSES = {429, 500, 502, 503, 504}  # "slow down" and temporary server errors
+
+# One shared client reuses the same connection for every call (much faster)
+client = httpx.Client(base_url = BASE_URL, timeout = 20)
+
+
+class SteamAPIError(Exception):
+    """Steam API Call Failed"""
+
+    def __init__(self, message, status_code=None):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def steam_get(path, **params):
+    """Call a Steam endpoint, retrying temporary failures with growing waits"""
     params["key"] = STEAM_API_KEY
-    response = httpx.get(f"{BASE_URL}/{path}/", params = params, timeout = 20)
-    response.raise_for_status()
-    return response.json()
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            response = client.get(f"/{path}/", params=params)
+        except httpx.TransportError as error:  # no internet, timeout, etc.
+            problem, status = f"network error ({type(error).__name__})", None
+        else:
+            if response.status_code not in RETRY_STATUSES:
+                if response.is_error:
+                    raise SteamAPIError(
+                        f"{path} returned HTTP {response.status_code}",
+                        response.status_code,
+                    )
+                return response.json()
+            problem, status = f"HTTP {response.status_code}", response.status_code
+
+        if attempt == MAX_ATTEMPTS:
+            raise SteamAPIError(f"{path} failed after {attempt} tries: {problem}", status)
+        wait = 2**attempt  # 2, 4, 8 seconds ("exponential backoff")
+        logger.warning("%s: %s, retrying in %ds", path, problem, wait)
+        time.sleep(wait)
 
 
 def get_player_summary(steam_id):
+    """Profile info, or None if no such user exists."""
     data = steam_get("ISteamUser/GetPlayerSummaries/v2", steamids = steam_id)
-    return data["response"]["players"][0]
+    players = data["response"]["players"]
+    return players[0] if players else None
 
 
 def get_owned_games(steam_id):
@@ -33,19 +71,21 @@ def get_player_achievements(steam_id, app_id):
     try:
         data = steam_get(
             "ISteamUserStats/GetPlayerAchievements/v1",
-            steamid = steam_id,
-            appid = app_id,
+            steamid=steam_id,
+            appid=app_id,
             l = "english",
         )
-    except httpx.HTTPStatusError:
-        return []
+    except SteamAPIError as error:
+        if error.status_code in (400, 403):
+            return []
+        raise
     return data["playerstats"].get("achievements", [])
 
 
 def get_schema(app_id):
-    """Names, descriptions and icons for every achievement"""
+    """Names, descriptions and icons for every achievement in a game"""
     data = steam_get("ISteamUserStats/GetSchemaForGame/v2", appid = app_id, l = "english")
-    return data["game"].get("availableGameStats", {}).get("achievements", [])
+    return data.get("game", {}).get("availableGameStats", {}).get("achievements", [])
 
 
 def get_global_percentages(app_id):
