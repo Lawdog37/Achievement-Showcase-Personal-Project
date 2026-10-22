@@ -226,3 +226,4 @@ dist/
 # Local database
 *.db
 *.sqlite3
+data/

@@ -1,5 +1,5 @@
 """Phase 1: exploring the Steam Web API and printing your rarest achievements."""
-
+"""This is more of a playground in a sense that this will not be used in the final product"""
 import os
 import sys
 from datetime import datetime
