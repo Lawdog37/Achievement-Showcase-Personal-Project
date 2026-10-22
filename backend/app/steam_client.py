@@ -20,7 +20,7 @@ client = httpx.Client(base_url = BASE_URL, timeout = 20)
 class SteamAPIError(Exception):
     """Steam API Call Failed"""
 
-    def __init__(self, message, status_code=None):
+    def __init__(self, message, status_code = None):
         super().__init__(message)
         self.status_code = status_code
 
@@ -94,3 +94,9 @@ def get_global_percentages(app_id):
     )
     achievements = data["achievementpercentages"]["achievements"]
     return {a["name"]: float(a["percent"]) for a in achievements}
+
+def resolve_vanity_url(name):
+    """Turn a custom profile name (steamcommunity.com/id/NAME) into SteamID"""
+    data = steam_get("ISteamUser/ResolveVanityURL/v1", vanityurl = name)
+    response = data["response"]
+    return response["steamid"] if response.get("success") == 1 else None

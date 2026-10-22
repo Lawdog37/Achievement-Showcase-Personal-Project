@@ -15,4 +15,6 @@ def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
     if DATABASE_URL.startswith("sqlite"):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys = ON")
+                # WAL mode lets the API read while a sync is writing
+        cursor.execute("PRAGMA journal_mode=WAL")
         cursor.close()
