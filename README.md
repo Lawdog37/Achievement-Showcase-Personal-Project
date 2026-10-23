@@ -27,6 +27,8 @@ You need [Docker Desktop](https://www.docker.com/products/docker-desktop/) and a
 
 The Steam profile's **Game details** must be set to **Public** (Steam → Edit Profile → Privacy Settings).
 
+<img width="2544" height="1275" alt="image" src="https://github.com/user-attachments/assets/3ddb41c3-e2cf-4fc4-a586-2e780555cf6f" />
+
 ## Tech stack
 
 | Part | Tools |
