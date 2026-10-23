@@ -89,12 +89,7 @@ def completion_by_game(session, steam_id):
 
 def games_in_progress(session, steam_id, limit=10):
     """Started but not finished, closest to 100% first."""
-    stmt = (
-        _completion_query(steam_id)
-        .having(UNLOCKED > 0)
-        .having(UNLOCKED < TOTAL)
-        .limit(limit)
-    )
+    stmt = _completion_query(steam_id).having(UNLOCKED > 0).having(UNLOCKED < TOTAL).limit(limit)
     return session.execute(stmt).all()
 
 

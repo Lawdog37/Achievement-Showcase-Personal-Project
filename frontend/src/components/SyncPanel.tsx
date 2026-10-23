@@ -27,7 +27,9 @@ export function SyncPanel({ steamId }: { steamId: string }) {
         {running ? 'Syncing…' : 'Sync now'}
       </button>
       {message && (
-        <p className={`max-w-xs text-xs ${data?.state === 'failed' ? 'text-rose-400' : 'text-slate-400'}`}>
+        <p
+          className={`max-w-xs text-xs ${data?.state === 'failed' ? 'text-rose-400' : 'text-slate-400'}`}
+        >
           {message}
         </p>
       )}

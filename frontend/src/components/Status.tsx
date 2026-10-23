@@ -12,7 +12,10 @@ export function LoadingBlock({ label = 'Loading…' }: { label?: string }) {
 
 export function ErrorBlock({ message }: { message: string }) {
   return (
-    <div className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-rose-300" role="alert">
+    <div
+      className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-4 text-rose-300"
+      role="alert"
+    >
       {message}
     </div>
   )

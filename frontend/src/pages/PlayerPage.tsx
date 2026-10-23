@@ -23,7 +23,8 @@ export default function PlayerPage() {
         <div className="mx-auto max-w-md rounded-xl border border-slate-800 bg-slate-900 p-6">
           <h1 className="text-xl font-semibold">Not synced yet</h1>
           <p className="mt-2 mb-4 text-slate-400">
-            This profile isn't in the database. Sync it to fetch its games and achievements from Steam.
+            This profile isn't in the database. Sync it to fetch its games and achievements from
+            Steam.
           </p>
           <SyncPanel steamId={steamId} />
         </div>

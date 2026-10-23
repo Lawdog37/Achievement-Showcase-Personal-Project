@@ -7,7 +7,11 @@ export function PlayerHeader({ player }: { player: Player }) {
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
         {player.avatar_url && (
-          <img src={player.avatar_url} alt="" className="size-16 rounded-lg ring-2 ring-slate-700" />
+          <img
+            src={player.avatar_url}
+            alt=""
+            className="size-16 rounded-lg ring-2 ring-slate-700"
+          />
         )}
         <div>
           <h1 className="text-2xl font-bold">{player.name}</h1>

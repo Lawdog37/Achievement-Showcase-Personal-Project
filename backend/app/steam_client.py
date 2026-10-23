@@ -14,13 +14,13 @@ MAX_ATTEMPTS = 4
 RETRY_STATUSES = {429, 500, 502, 503, 504}  # "slow down" and temporary server errors
 
 # One shared client reuses the same connection for every call (much faster)
-client = httpx.Client(base_url = BASE_URL, timeout = 20)
+client = httpx.Client(base_url=BASE_URL, timeout=20)
 
 
 class SteamAPIError(Exception):
     """Steam API Call Failed"""
 
-    def __init__(self, message, status_code = None):
+    def __init__(self, message, status_code=None):
         super().__init__(message)
         self.status_code = status_code
 
@@ -52,7 +52,7 @@ def steam_get(path, **params):
 
 def get_player_summary(steam_id):
     """Profile info, or None if no such user exists."""
-    data = steam_get("ISteamUser/GetPlayerSummaries/v2", steamids = steam_id)
+    data = steam_get("ISteamUser/GetPlayerSummaries/v2", steamids=steam_id)
     players = data["response"]["players"]
     return players[0] if players else None
 
@@ -60,9 +60,9 @@ def get_player_summary(steam_id):
 def get_owned_games(steam_id):
     data = steam_get(
         "IPlayerService/GetOwnedGames/v1",
-        steamid = steam_id,
-        include_appinfo = 1,
-        include_played_free_games = 1,
+        steamid=steam_id,
+        include_appinfo=1,
+        include_played_free_games=1,
     )
     return data["response"].get("games", [])
 
@@ -73,7 +73,7 @@ def get_player_achievements(steam_id, app_id):
             "ISteamUserStats/GetPlayerAchievements/v1",
             steamid=steam_id,
             appid=app_id,
-            l = "english",
+            l="english",
         )
     except SteamAPIError as error:
         if error.status_code in (400, 403):
@@ -84,19 +84,18 @@ def get_player_achievements(steam_id, app_id):
 
 def get_schema(app_id):
     """Names, descriptions and icons for every achievement in a game"""
-    data = steam_get("ISteamUserStats/GetSchemaForGame/v2", appid = app_id, l = "english")
+    data = steam_get("ISteamUserStats/GetSchemaForGame/v2", appid=app_id, l="english")
     return data.get("game", {}).get("availableGameStats", {}).get("achievements", [])
 
 
 def get_global_percentages(app_id):
-    data = steam_get(
-        "ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2", gameid = app_id
-    )
+    data = steam_get("ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2", gameid=app_id)
     achievements = data["achievementpercentages"]["achievements"]
     return {a["name"]: float(a["percent"]) for a in achievements}
 
+
 def resolve_vanity_url(name):
     """Turn a custom profile name (steamcommunity.com/id/NAME) into SteamID"""
-    data = steam_get("ISteamUser/ResolveVanityURL/v1", vanityurl = name)
+    data = steam_get("ISteamUser/ResolveVanityURL/v1", vanityurl=name)
     response = data["response"]
     return response["steamid"] if response.get("success") == 1 else None

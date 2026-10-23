@@ -4,7 +4,7 @@ These are separate from models.py on purpose: database tables can change
 without breaking the API, and the API never leaks columns by accident.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict
@@ -13,7 +13,7 @@ from pydantic import AfterValidator, BaseModel, ConfigDict
 def _assume_utc(value):
     # SQLite gives times back without a time zone. We always store UTC, so say so,
     # or browsers would treat them as local time.
-    return value.replace(tzinfo = timezone.utc) if value.tzinfo is None else value
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value
 
 
 UtcDatetime = Annotated[datetime, AfterValidator(_assume_utc)]
@@ -21,7 +21,7 @@ UtcDatetime = Annotated[datetime, AfterValidator(_assume_utc)]
 
 class Schema(BaseModel):
     # Lets Pydantic read database rows (row.name) as well as dicts (row["name"])
-    model_config = ConfigDict(from_attributes = True)
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PlayerOut(Schema):

@@ -38,7 +38,7 @@ def resolve_player(
     try:
         steam_id = steam_client.resolve_vanity_url(name)
     except steam_client.SteamAPIError:
-        raise HTTPException(502, "Steam didn't respond. Try again in a moment.")
+        raise HTTPException(502, "Steam didn't respond. Try again in a moment.") from None
     if steam_id is None:
         raise HTTPException(404, f"No Steam profile found for '{name}'")
     return {"steam_id": steam_id}

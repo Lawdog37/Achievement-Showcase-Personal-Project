@@ -13,7 +13,11 @@ export function StatTiles({ steamId }: { steamId: string }) {
       value: formatNumber(data.achievements_unlocked),
       detail: `of ${formatNumber(data.achievements_total)}`,
     },
-    { label: 'Average completion', value: `${data.average_completion}%`, detail: 'across started games' },
+    {
+      label: 'Average completion',
+      value: `${data.average_completion}%`,
+      detail: 'across started games',
+    },
     { label: 'Perfect games', value: formatNumber(data.perfect_games), detail: 'at 100%' },
     {
       label: 'Games started',
@@ -21,7 +25,11 @@ export function StatTiles({ steamId }: { steamId: string }) {
       detail: `of ${formatNumber(data.games_with_achievements)} with achievements`,
     },
     { label: 'Games owned', value: formatNumber(data.games_owned), detail: 'in the library' },
-    { label: 'Hours played', value: formatNumber(Math.round(data.hours_played)), detail: 'all time' },
+    {
+      label: 'Hours played',
+      value: formatNumber(Math.round(data.hours_played)),
+      detail: 'all time',
+    },
   ]
 
   return (

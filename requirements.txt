@@ -1,5 +1,0 @@
-httpx
-python-dotenv
-sqlalchemy
-alembic
-fastapi[standard]

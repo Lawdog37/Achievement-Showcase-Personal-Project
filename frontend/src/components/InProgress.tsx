@@ -22,7 +22,10 @@ export function InProgress({ steamId }: { steamId: string }) {
                   </span>
                 </div>
                 <div className="mt-1 h-2 rounded-full bg-slate-800">
-                  <div className="h-2 rounded-full bg-emerald-400" style={{ width: `${game.pct}%` }} />
+                  <div
+                    className="h-2 rounded-full bg-emerald-400"
+                    style={{ width: `${game.pct}%` }}
+                  />
                 </div>
               </div>
             </li>
@@ -40,7 +43,9 @@ export function InProgress({ steamId }: { steamId: string }) {
                 <p className="truncate">{a.display_name}</p>
                 <p className="truncate text-xs text-slate-400">{a.game_name}</p>
               </div>
-              <span className="shrink-0 text-xs text-slate-400">{a.global_percent.toFixed(1)}% have it</span>
+              <span className="shrink-0 text-xs text-slate-400">
+                {a.global_percent.toFixed(1)}% have it
+              </span>
             </li>
           ))}
         </ul>

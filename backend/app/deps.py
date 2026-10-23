@@ -20,9 +20,9 @@ DbSession = Annotated[Session, Depends(get_db)]
 SteamId = Annotated[
     str,
     Path(
-        pattern = r"^\d{17}$",
-        description = "64-bit SteamID (17 digits)",
-        examples = ["76561197960287930"],
+        pattern=r"^\d{17}$",
+        description="64-bit SteamID (17 digits)",
+        examples=["76561197960287930"],
     ),
 ]
 
@@ -32,8 +32,8 @@ def get_player(steam_id: SteamId, db: DbSession) -> Player:
     player = db.get(Player, steam_id)
     if player is None:
         raise HTTPException(
-            status_code = 404,
-            detail = "Player not found. Sync them first with POST /api/players/{steam_id}/sync",
+            status_code=404,
+            detail="Player not found. Sync them first with POST /api/players/{steam_id}/sync",
         )
     return player
 

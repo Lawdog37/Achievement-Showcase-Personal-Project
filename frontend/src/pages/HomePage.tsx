@@ -20,7 +20,8 @@ export default function HomePage() {
     <div className="mx-auto max-w-xl py-16 text-center">
       <h1 className="text-4xl font-bold tracking-tight">Show off your rarest achievements</h1>
       <p className="mt-3 text-slate-400">
-        Enter a Steam profile URL, custom name or SteamID. The profile's game details must be public.
+        Enter a Steam profile URL, custom name or SteamID. The profile's game details must be
+        public.
       </p>
       <form onSubmit={handleSubmit} className="mt-8 flex gap-2">
         <input

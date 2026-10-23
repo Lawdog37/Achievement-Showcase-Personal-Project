@@ -9,7 +9,7 @@ import argparse
 import logging
 import time
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app import steam_client as steam
 from app.config import STEAM_ID
@@ -29,21 +29,21 @@ class SyncError(Exception):
 
 # --- Time helpers --------------------------------------------------------
 def now_utc():
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def to_datetime(unix_seconds):
     """Steam sends times as seconds since 1970. 0 means 'no time'."""
     if not unix_seconds:
         return None
-    return datetime.fromtimestamp(unix_seconds, tz = timezone.utc)
+    return datetime.fromtimestamp(unix_seconds, tz=UTC)
 
 
 def as_utc(value):
     """SQLite forgets time zones when it saves, so label stored times as UTC."""
     if value is None or value.tzinfo is not None:
         return value
-    return value.replace(tzinfo = timezone.utc)
+    return value.replace(tzinfo=UTC)
 
 
 # --- Saving each kind of row ---------------------------------------------
@@ -56,8 +56,8 @@ def save_player(session, steam_id):
     return session.merge(
         Player(
             steam_id=steam_id,
-            name = summary["personaname"],
-            avatar_url = summary.get("avatarfull"),
+            name=summary["personaname"],
+            avatar_url=summary.get("avatarfull"),
         )
     )
 
@@ -111,13 +111,13 @@ def save_achievements(session, steam_id, game):
         # merge() only updates the fields we pass, so global_percent is kept
         session.merge(
             Achievement(
-                app_id = game.app_id,
-                api_name = a["name"],
-                display_name = a["displayName"],
-                description = a.get("description"),
-                icon_url = a.get("icon"),
-                icon_gray_url = a.get("icongray"),
-                hidden = bool(a.get("hidden", 0)),
+                app_id=game.app_id,
+                api_name=a["name"],
+                display_name=a["displayName"],
+                description=a.get("description"),
+                icon_url=a.get("icon"),
+                icon_gray_url=a.get("icongray"),
+                hidden=bool(a.get("hidden", 0)),
             )
         )
     session.flush()  # achievements must exist before unlocks can point at them
@@ -139,9 +139,9 @@ def save_achievements(session, steam_id, game):
     for a in unlocked:
         session.merge(
             PlayerAchievement(
-                steam_id = steam_id,
-                app_id = game.app_id,
-                api_name = a["apiname"],
+                steam_id=steam_id,
+                app_id=game.app_id,
+                api_name=a["apiname"],
                 unlocked_at=to_datetime(a["unlocktime"]),
             )
         )
@@ -223,7 +223,7 @@ def main():
     try:
         summary = sync_player(args.steam_id, force=args.force, only_app_id=args.game)
     except SyncError as error:
-        raise SystemExit(f"Sync failed: {error}")
+        raise SystemExit(f"Sync failed: {error}") from None
     print(
         f"\nDone in {summary['seconds']}s: {summary['synced']} synced, "
         f"{summary['skipped']} unchanged, {summary['failed']} failed "

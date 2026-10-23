@@ -6,7 +6,7 @@ when the server restarts; a hosted version would use a job queue (Phase 8).
 
 import logging
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.sync import SyncError, sync_player
 
@@ -29,7 +29,7 @@ def try_start(steam_id):
         _jobs[steam_id] = {
             "steam_id": steam_id,
             "state": "running",
-            "started_at": datetime.now(timezone.utc),
+            "started_at": datetime.now(UTC),
         }
         return True
 
@@ -44,6 +44,6 @@ def run(steam_id, force):
     except Exception:
         logger.exception("Sync crashed for %s", steam_id)
         update = {"state": "failed", "error": "Unexpected error. Check the server logs."}
-    update["finished_at"] = datetime.now(timezone.utc)
+    update["finished_at"] = datetime.now(UTC)
     with _lock:
         _jobs[steam_id].update(update)

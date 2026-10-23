@@ -1,0 +1,46 @@
+# One file that describes the backend: what it needs, and how its tools behave.
+
+[project]
+name = "achievement-showcase-backend"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20",
+    "fastapi[standard]>=0.161",
+    "httpx>=0.28",
+    "python-dotenv>=1.2",
+    "sqlalchemy>=2.0",
+]
+
+[project.optional-dependencies]
+# Only needed while developing: pip install -e ".[dev]"
+dev = [
+    "pre-commit>=4.7",
+    "pytest>=9.1",
+    "respx>=0.23",
+    "ruff>=0.17",
+]
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # style errors
+    "F",   # real bugs: unused imports, undefined names
+    "I",   # sorted imports
+    "B",   # common bug patterns
+    "UP",  # modern Python syntax
+    "SIM", # simpler ways to write the same thing
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

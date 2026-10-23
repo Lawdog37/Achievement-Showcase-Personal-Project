@@ -1,4 +1,5 @@
 """Phase 1: exploring the Steam Web API and printing your rarest achievements."""
+
 """This is more of a playground in a sense that this will not be used in the final product"""
 import os
 import sys
@@ -20,14 +21,14 @@ if not API_KEY or not STEAM_ID:
 def steam_get(path, **params):
     """Call a Steam Web API endpoint and return the JSON as a dictionary"""
     params["key"] = API_KEY
-    response = httpx.get(f"{BASE_URL}/{path}/", params = params, timeout = 20)
+    response = httpx.get(f"{BASE_URL}/{path}/", params=params, timeout=20)
     response.raise_for_status()  # turns 4xx/5xx errors into exceptions
     return response.json()
 
 
 # --- Who am I? -------------------------------------------------
 def get_player_summary():
-    data = steam_get("ISteamUser/GetPlayerSummaries/v2", steamids = STEAM_ID)
+    data = steam_get("ISteamUser/GetPlayerSummaries/v2", steamids=STEAM_ID)
     return data["response"]["players"][0]
 
 
@@ -35,9 +36,9 @@ def get_player_summary():
 def get_owned_games():
     data = steam_get(
         "IPlayerService/GetOwnedGames/v1",
-        steamid = STEAM_ID,
-        include_appinfo = 1,
-        include_played_free_games = 1,
+        steamid=STEAM_ID,
+        include_appinfo=1,
+        include_played_free_games=1,
     )
     return data["response"].get("games", [])
 
@@ -47,9 +48,9 @@ def get_player_achievements(app_id):
     try:
         data = steam_get(
             "ISteamUserStats/GetPlayerAchievements/v1",
-            steamid = STEAM_ID,
-            appid = app_id,
-            l = "english",
+            steamid=STEAM_ID,
+            appid=app_id,
+            l="english",
         )
     except httpx.HTTPStatusError:
         return []  # Edge cases(No achievements/steam didnt respond)
@@ -70,7 +71,7 @@ def main():
     print(f"Player: {player['personaname']}")
 
     games = get_owned_games()
-    games.sort(key = lambda g: g["playtime_forever"], reverse = True)
+    games.sort(key=lambda g: g["playtime_forever"], reverse=True)
     print(f"\nYou own {len(games)} games. Most played:")
     for game in games[:10]:
         hours = game["playtime_forever"] / 60
@@ -89,7 +90,7 @@ def main():
     unlocked = [a for a in achievements if a["achieved"] == 1]
     for a in unlocked:
         a["percent"] = percentages.get(a["apiname"], 100.0)
-    unlocked.sort(key = lambda a: a["percent"])
+    unlocked.sort(key=lambda a: a["percent"])
 
     done = len(unlocked) / len(achievements) * 100
     print(f"\n{game_name}: {len(unlocked)}/{len(achievements)} unlocked ({done:.0f}%)")
