@@ -8,6 +8,7 @@ import logging
 import threading
 from datetime import UTC, datetime
 
+from app.steam_client import SteamAPIError
 from app.sync import SyncError, sync_player
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ def run(steam_id, force):
     try:
         result = sync_player(steam_id, force=force)
         update = {"state": "done", "result": result}
-    except SyncError as error:
+    except (SyncError, SteamAPIError) as error:
         update = {"state": "failed", "error": str(error)}
     except Exception:
         logger.exception("Sync crashed for %s", steam_id)

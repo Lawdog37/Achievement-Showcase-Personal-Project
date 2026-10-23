@@ -1,0 +1,40 @@
+# Runs the whole app with one command:  docker compose up --build
+# Then open http://localhost:8080
+name: achievement-showcase
+
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - path: .env # your STEAM_API_KEY lives here (never baked into the image)
+        required: false
+    volumes:
+      - app-data:/data # the database survives restarts and rebuilds
+    healthcheck:
+      # "Healthy" once the API answers. The frontend waits for this.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    # No "ports:" on purpose: only the frontend can reach the API,
+    # not the rest of your network.
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80" # your PC's port 8080 -> nginx's port 80 inside the container
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  app-data:

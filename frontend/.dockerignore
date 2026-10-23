@@ -1,0 +1,3 @@
+# Files Docker should never copy into the image
+node_modules/
+dist/

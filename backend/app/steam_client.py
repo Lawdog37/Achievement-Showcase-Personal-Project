@@ -27,6 +27,8 @@ class SteamAPIError(Exception):
 
 def steam_get(path, **params):
     """Call a Steam endpoint, retrying temporary failures with growing waits"""
+    if not STEAM_API_KEY:
+        raise SteamAPIError("STEAM_API_KEY is not set. Add it to your .env file.")
     params["key"] = STEAM_API_KEY
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:

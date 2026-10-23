@@ -48,3 +48,11 @@ def test_steam_outage_is_not_mistaken_for_no_achievements(steam):
 
     with pytest.raises(SteamAPIError):
         steam_client.get_player_achievements("1", 99)
+
+
+def test_missing_api_key_gives_a_clear_error(steam, monkeypatch):
+    monkeypatch.setattr(steam_client, "STEAM_API_KEY", "")
+
+    with pytest.raises(SteamAPIError, match="STEAM_API_KEY is not set"):
+        steam_client.get_player_summary("1")
+    assert not steam.calls  # it never even tried to contact Steam
