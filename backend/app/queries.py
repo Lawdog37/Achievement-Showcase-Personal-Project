@@ -93,6 +93,45 @@ def games_in_progress(session, steam_id, limit=10):
     return session.execute(stmt).all()
 
 
+def player_games(session, steam_id, status="in_progress", sort="percent"):
+    """Every owned game that has achievements, with its completion"""
+    remaining = TOTAL - UNLOCKED
+    stmt = _owned_achievements(
+        steam_id,
+        Game.app_id,
+        Game.name,
+        Game.icon_url,
+        PlayerGame.playtime_minutes,
+        PlayerGame.last_played_at,
+        TOTAL.label("total"),
+        UNLOCKED.label("unlocked"),
+        remaining.label("remaining"),
+        PCT.label("pct"),
+    ).group_by(
+        Game.app_id,
+        Game.name,
+        Game.icon_url,
+        PlayerGame.playtime_minutes,
+        PlayerGame.last_played_at,
+    )
+
+    # HAVING filters on the counts, after GROUP BY has done the counting
+    if status == "in_progress":
+        stmt = stmt.having(UNLOCKED > 0).having(UNLOCKED < TOTAL)
+    elif status == "completed":
+        stmt = stmt.having(UNLOCKED == TOTAL)
+    elif status == "not_started":
+        stmt = stmt.having(UNLOCKED == 0)
+
+    order_by = {
+        "percent": [PCT.desc(), Game.name],
+        "remaining": [remaining, Game.name],
+        "name": [Game.name],
+        "recent": [PlayerGame.last_played_at.desc().nulls_last(), Game.name],
+    }[sort]
+    return session.execute(stmt.order_by(*order_by)).all()
+
+
 def next_easiest(session, steam_id, limit=5):
     """Locked achievements that the most players have, so the easiest to get next."""
     stmt = (

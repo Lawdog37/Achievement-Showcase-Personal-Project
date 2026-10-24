@@ -1,4 +1,13 @@
-import type { InProgress, Player, ShowcaseItem, Stats, SyncStatus } from './types'
+import type {
+  GameCompletion,
+  GameSort,
+  GameStatus,
+  InProgress,
+  Player,
+  ShowcaseItem,
+  Stats,
+  SyncStatus,
+} from './types'
 
 /** An error from our API, carrying the HTTP status (404, 409, ...). */
 export class ApiError extends Error {
@@ -35,6 +44,8 @@ export const api = {
   inProgress: (steamId: string) =>
     request<InProgress>(`/players/${steamId}/in-progress?games_limit=8&achievements_limit=8`),
   stats: (steamId: string) => request<Stats>(`/players/${steamId}/stats`),
+  games: (steamId: string, status: GameStatus, sort: GameSort) =>
+    request<GameCompletion[]>(`/players/${steamId}/games?status=${status}&sort=${sort}`),
   syncStatus: (steamId: string) => request<SyncStatus>(`/players/${steamId}/sync`),
   startSync: (steamId: string, force = false) =>
     request<SyncStatus>(`/players/${steamId}/sync?force=${force}`, { method: 'POST' }),

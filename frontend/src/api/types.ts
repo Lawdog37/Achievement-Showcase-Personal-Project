@@ -65,3 +65,12 @@ export interface SyncStatus {
   result: { games: number; synced: number; skipped: number; failed: number; seconds: number } | null
   error: string | null
 }
+
+export interface GameCompletion extends GameProgress {
+  remaining: number
+  playtime_minutes: number
+  last_played_at: string | null
+}
+
+export type GameStatus = 'in_progress' | 'completed' | 'not_started' | 'all'
+export type GameSort = 'percent' | 'remaining' | 'name' | 'recent'

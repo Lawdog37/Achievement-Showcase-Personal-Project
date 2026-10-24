@@ -1,13 +1,20 @@
 """Read-only endpoints: profile, showcase, progress and stats."""
 
 import re
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query
 
 from app import queries, steam_client
 from app.deps import CurrentPlayer, DbSession
-from app.schemas import InProgressOut, PlayerOut, ResolveOut, ShowcaseItem, StatsOut
+from app.schemas import (
+    GameCompletion,
+    InProgressOut,
+    PlayerOut,
+    ResolveOut,
+    ShowcaseItem,
+    StatsOut,
+)
 
 router = APIRouter(prefix="/api", tags=["players"])
 
@@ -76,3 +83,14 @@ def read_in_progress(
 @router.get("/players/{steam_id}/stats", response_model=StatsOut)
 def read_stats(player: CurrentPlayer, db: DbSession):
     return queries.player_stats(db, player.steam_id)
+
+
+@router.get("/players/{steam_id}/games", response_model=list[GameCompletion])
+def read_games(
+    player: CurrentPlayer,
+    db: DbSession,
+    status: Literal["in_progress", "completed", "not_started", "all"] = "in_progress",
+    sort: Literal["percent", "remaining", "name", "recent"] = "percent",
+):
+    """Every game with achievements and its completion, filtered and sorted."""
+    return queries.player_games(db, player.steam_id, status, sort)

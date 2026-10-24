@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { ApiError, api } from '../api/client'
-import type { SyncState } from '../api/types'
+import type { GameSort, GameStatus, SyncState } from '../api/types'
 
 // Every query for one player starts with ['player', steamId], so we can
 // refresh all of them at once after a sync.
@@ -36,6 +36,16 @@ export function useStats(steamId: string) {
   return useQuery({
     queryKey: [...playerKey(steamId), 'stats'],
     queryFn: () => api.stats(steamId),
+  })
+}
+
+export function useGames(steamId: string, status: GameStatus, sort: GameSort) {
+  return useQuery({
+    // status and sort are part of the key, so each combination is cached separately
+    queryKey: [...playerKey(steamId), 'games', status, sort],
+    queryFn: () => api.games(steamId, status, sort),
+    // Keep showing the old list while the new one loads (no flicker when switching tabs)
+    placeholderData: keepPreviousData,
   })
 }
 

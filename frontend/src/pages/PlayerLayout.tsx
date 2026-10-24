@@ -1,16 +1,17 @@
-import { useParams } from 'react-router'
+import { Outlet, useParams } from 'react-router'
 import { ApiError } from '../api/client'
-import { InProgress } from '../components/InProgress'
 import { PlayerHeader } from '../components/PlayerHeader'
-import { ShowcaseGrid } from '../components/ShowcaseGrid'
-import { StatTiles } from '../components/StatTiles'
-import { ErrorBlock, LoadingBlock, Section } from '../components/Status'
+import { PlayerNav } from '../components/PlayerNav'
+import { ErrorBlock, LoadingBlock } from '../components/Status'
 import { SyncPanel } from '../components/SyncPanel'
-import { UnlocksChart } from '../components/UnlocksChart'
 import { usePlayer } from '../hooks/usePlayerData'
 
-export default function PlayerPage() {
-  const { steamId = '' } = useParams() // from the URL: /player/:steamId
+/**
+ * The frame around every player page: loads the player, shows the header and
+ * tabs, then <Outlet /> shows whichever tab's page matches the URL.
+ */
+export default function PlayerLayout() {
+  const { steamId = '' } = useParams() // from the URL: /player/:steamId/...
   const validId = /^\d{17}$/.test(steamId)
   const player = usePlayer(steamId, validId)
 
@@ -36,16 +37,8 @@ export default function PlayerPage() {
   return (
     <>
       <PlayerHeader player={player.data} />
-      <StatTiles steamId={steamId} />
-      <Section title="Rarest achievements" subtitle="Unlocked by the fewest players worldwide">
-        <ShowcaseGrid steamId={steamId} />
-      </Section>
-      <Section title="In progress">
-        <InProgress steamId={steamId} />
-      </Section>
-      <Section title="Unlocks over time" subtitle="Achievements unlocked per month">
-        <UnlocksChart steamId={steamId} />
-      </Section>
+      <PlayerNav />
+      <Outlet />
     </>
   )
 }

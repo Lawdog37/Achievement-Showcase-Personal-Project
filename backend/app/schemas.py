@@ -51,6 +51,14 @@ class GameProgress(Schema):
     pct: float
 
 
+class GameCompletion(GameProgress):
+    """GameProgress plus a few extra fields (inherits everything above)."""
+
+    remaining: int
+    playtime_minutes: int
+    last_played_at: UtcDatetime | None
+
+
 class LockedAchievement(Schema):
     app_id: int
     game_name: str
