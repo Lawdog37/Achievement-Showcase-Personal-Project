@@ -1,8 +1,8 @@
 """Database tables, written as Python classes (SQLAlchemy 2.0 style)"""
 
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import DateTime, ForeignKey, ForeignKeyConstraint, String
+from sqlalchemy import Date, DateTime, ForeignKey, ForeignKeyConstraint, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -80,3 +80,27 @@ class PlayerAchievement(Base):
             ["achievements.app_id", "achievements.api_name"],
         ),
     )
+
+
+class Hunt(Base):
+    """A game the player has chosen to work on"""
+
+    __tablename__ = "hunts"
+
+    steam_id: Mapped[str] = mapped_column(ForeignKey("players.steam_id"), primary_key=True)
+    app_id: Mapped[int] = mapped_column(ForeignKey("games.app_id"), primary_key=True)
+    added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class GameSnapshot(Base):
+    """A game's global rarity numbers on one day. Saved daily so we can spot
+    trends later, like more and more people finishing a game."""
+
+    __tablename__ = "game_snapshots"
+
+    app_id: Mapped[int] = mapped_column(ForeignKey("games.app_id"), primary_key=True)
+    taken_on: Mapped[date] = mapped_column(Date, primary_key=True)
+    # % of players with the game's rarest achievement: close to "% who got 100%"
+    rarest_percent: Mapped[float]
+    average_percent: Mapped[float]
+    achievement_count: Mapped[int]

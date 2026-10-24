@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage'
 import NearCompletionPage from './pages/NearCompletionPage'
 import PlayerLayout from './pages/PlayerLayout'
 import ProfilePage from './pages/ProfilePage'
+import HuntingPage from './pages/HuntingPage'
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/player/:steamId" element={<PlayerLayout />}>
             <Route index element={<ProfilePage />} />
             <Route path="near-completion" element={<NearCompletionPage />} />
+            <Route path="hunting" element={<HuntingPage />} />
           </Route>
           <Route path="*" element={<p className="text-slate-400">Page not found.</p>} />
         </Routes>

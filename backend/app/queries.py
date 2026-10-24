@@ -3,14 +3,14 @@
 Try it (from the backend folder):  python -m app.queries
 """
 
-from collections import Counter
+from collections import Counter, defaultdict
 from statistics import mean
 
 from sqlalchemy import and_, func, select
 
 from app.config import STEAM_ID
 from app.database import SessionLocal
-from app.models import Achievement, Game, PlayerAchievement, PlayerGame
+from app.models import Achievement, Game, Hunt, PlayerAchievement, PlayerGame
 
 
 def rarest_unlocked(session, steam_id, limit=10):
@@ -93,7 +93,7 @@ def games_in_progress(session, steam_id, limit=10):
     return session.execute(stmt).all()
 
 
-def player_games(session, steam_id, status="in_progress", sort="percent"):
+def player_games(session, steam_id, status="in_progress", sort="percent", app_ids=None):
     """Every owned game that has achievements, with its completion"""
     remaining = TOTAL - UNLOCKED
     stmt = _owned_achievements(
@@ -114,7 +114,8 @@ def player_games(session, steam_id, status="in_progress", sort="percent"):
         PlayerGame.playtime_minutes,
         PlayerGame.last_played_at,
     )
-
+    if app_ids is not None:  # only these games (used by the Hunting page)
+        stmt = stmt.where(PlayerGame.app_id.in_(app_ids))
     # HAVING filters on the counts, after GROUP BY has done the counting
     if status == "in_progress":
         stmt = stmt.having(UNLOCKED > 0).having(UNLOCKED < TOTAL)
@@ -130,6 +131,42 @@ def player_games(session, steam_id, status="in_progress", sort="percent"):
         "recent": [PlayerGame.last_played_at.desc().nulls_last(), Game.name],
     }[sort]
     return session.execute(stmt.order_by(*order_by)).all()
+
+
+def player_hunts(session, steam_id):
+    """The games a player is hunting, each with every achievement still locked."""
+    added = dict(
+        session.execute(select(Hunt.app_id, Hunt.added_at).where(Hunt.steam_id == steam_id)).all()
+    )
+    if not added:
+        return []
+
+    games = player_games(session, steam_id, status="all", app_ids=list(added))
+    locked_rows = session.execute(
+        _owned_achievements(
+            steam_id,
+            Achievement.app_id,
+            Achievement.api_name,
+            Achievement.display_name,
+            Achievement.description,
+            Achievement.icon_gray_url,
+            Achievement.hidden,
+            Achievement.global_percent,
+        )
+        .where(PlayerGame.app_id.in_(list(added)))
+        .where(PlayerAchievement.api_name.is_(None))  # still locked
+        .order_by(Achievement.global_percent.desc().nulls_last(), Achievement.display_name)
+    ).all()
+
+    # Group the locked achievements by game: {app_id: [row, row, ...]}
+    locked = defaultdict(list)
+    for row in locked_rows:
+        locked[row.app_id].append(row)
+
+    return [
+        {"game": game, "added_at": added[game.app_id], "locked": locked[game.app_id]}
+        for game in games
+    ]
 
 
 def next_easiest(session, steam_id, limit=5):

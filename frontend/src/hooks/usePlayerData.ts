@@ -49,6 +49,30 @@ export function useGames(steamId: string, status: GameStatus, sort: GameSort) {
   })
 }
 
+export function useHunts(steamId: string) {
+  return useQuery({
+    queryKey: [...playerKey(steamId), 'hunts'],
+    queryFn: () => api.hunts(steamId),
+  })
+}
+
+/** Add, remove and refresh hunts. Each one reloads the player's data when done. */
+export function useHuntActions(steamId: string) {
+  const queryClient = useQueryClient()
+  const onSuccess = () => queryClient.invalidateQueries({ queryKey: playerKey(steamId) })
+  return {
+    add: useMutation({ mutationFn: (appId: number) => api.addHunt(steamId, appId), onSuccess }),
+    remove: useMutation({
+      mutationFn: (appId: number) => api.removeHunt(steamId, appId),
+      onSuccess,
+    }),
+    refresh: useMutation({
+      mutationFn: (appId: number) => api.refreshHunt(steamId, appId),
+      onSuccess,
+    }),
+  }
+}
+
 export function useSyncStatus(steamId: string) {
   const queryClient = useQueryClient()
   const query = useQuery({

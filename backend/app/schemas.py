@@ -59,6 +59,21 @@ class GameCompletion(GameProgress):
     last_played_at: UtcDatetime | None
 
 
+class HuntAchievement(Schema):
+    api_name: str
+    display_name: str
+    description: str | None
+    icon_gray_url: str | None
+    hidden: bool
+    global_percent: float | None
+
+
+class HuntOut(Schema):
+    game: GameCompletion
+    added_at: UtcDatetime
+    locked: list[HuntAchievement]  # easiest first
+
+
 class LockedAchievement(Schema):
     app_id: int
     game_name: str
