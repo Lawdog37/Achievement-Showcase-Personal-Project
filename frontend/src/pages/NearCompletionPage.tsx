@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useParams, useSearchParams } from 'react-router'
 import type { GameCompletion, GameSort, GameStatus } from '../api/types'
+import { HuntButton } from '../components/HuntButton'
 import { ProgressBar } from '../components/ProgressBar'
 import { ErrorBlock, LoadingBlock } from '../components/Status'
-import { useGames } from '../hooks/usePlayerData'
+import { useGames, useHunts } from '../hooks/usePlayerData'
 import { timeAgo } from '../lib/format'
 import { filterByName } from '../lib/games'
 
@@ -21,7 +22,15 @@ const SORTS: { value: GameSort; label: string }[] = [
   { value: 'name', label: 'Name' },
 ]
 
-function GameRow({ game }: { game: GameCompletion }) {
+function GameRow({
+  game,
+  steamId,
+  hunted,
+}: {
+  game: GameCompletion
+  steamId: string
+  hunted: boolean
+}) {
   return (
     <li className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 p-3">
       {game.icon_url && <img src={game.icon_url} alt="" className="size-10 shrink-0 rounded" />}
@@ -40,6 +49,7 @@ function GameRow({ game }: { game: GameCompletion }) {
           {timeAgo(game.last_played_at)}
         </p>
       </div>
+      {game.remaining > 0 && <HuntButton steamId={steamId} appId={game.app_id} hunted={hunted} />}
     </li>
   )
 }
@@ -54,6 +64,8 @@ export default function NearCompletionPage() {
   const [search, setSearch] = useState('')
 
   const { data, isPending, error, isPlaceholderData } = useGames(steamId, status, sort)
+  const hunts = useHunts(steamId)
+  const huntedIds = new Set(hunts.data?.map((hunt) => hunt.game.app_id))
 
   function update(key: string, value: string) {
     const next = new URLSearchParams(params)
@@ -115,7 +127,12 @@ export default function NearCompletionPage() {
           {/* Fade the old list slightly while the new filter loads */}
           <ul className={`mt-2 space-y-2 ${isPlaceholderData ? 'opacity-60' : ''}`}>
             {games.map((game) => (
-              <GameRow key={game.app_id} game={game} />
+              <GameRow
+                key={game.app_id}
+                game={game}
+                steamId={steamId}
+                hunted={huntedIds.has(game.app_id)}
+              />
             ))}
           </ul>
           {games.length === 0 && <p className="mt-4 text-slate-400">No games match.</p>}

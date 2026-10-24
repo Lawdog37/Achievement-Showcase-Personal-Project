@@ -4,6 +4,7 @@ import { NavLink } from 'react-router'
 const TABS = [
   { to: '', label: 'Profile' },
   { to: 'near-completion', label: 'Near completion' },
+  { to: 'hunting', label: 'Hunting' },
 ]
 
 export function PlayerNav() {
@@ -25,12 +26,6 @@ export function PlayerNav() {
           {tab.label}
         </NavLink>
       ))}
-      <span
-        className="shrink-0 cursor-not-allowed px-4 py-2 text-sm text-slate-600"
-        title="Coming in the next phase"
-      >
-        Hunting (soon)
-      </span>
     </nav>
   )
 }

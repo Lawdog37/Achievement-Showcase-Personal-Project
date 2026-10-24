@@ -74,3 +74,18 @@ export interface GameCompletion extends GameProgress {
 
 export type GameStatus = 'in_progress' | 'completed' | 'not_started' | 'all'
 export type GameSort = 'percent' | 'remaining' | 'name' | 'recent'
+
+export interface HuntAchievement {
+  api_name: string
+  display_name: string
+  description: string | null
+  icon_gray_url: string | null
+  hidden: boolean
+  global_percent: number | null
+}
+
+export interface Hunt {
+  game: GameCompletion
+  added_at: string
+  locked: HuntAchievement[] // easiest first
+}

@@ -2,6 +2,7 @@ import type {
   GameCompletion,
   GameSort,
   GameStatus,
+  Hunt,
   InProgress,
   Player,
   ShowcaseItem,
@@ -31,6 +32,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(response.status, message)
   }
+  // 204 means "done, nothing to send back", so there's no JSON to read
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
@@ -46,6 +49,13 @@ export const api = {
   stats: (steamId: string) => request<Stats>(`/players/${steamId}/stats`),
   games: (steamId: string, status: GameStatus, sort: GameSort) =>
     request<GameCompletion[]>(`/players/${steamId}/games?status=${status}&sort=${sort}`),
+  hunts: (steamId: string) => request<Hunt[]>(`/players/${steamId}/hunts`),
+  addHunt: (steamId: string, appId: number) =>
+    request<void>(`/players/${steamId}/hunts/${appId}`, { method: 'PUT' }),
+  removeHunt: (steamId: string, appId: number) =>
+    request<void>(`/players/${steamId}/hunts/${appId}`, { method: 'DELETE' }),
+  refreshHunt: (steamId: string, appId: number) =>
+    request<void>(`/players/${steamId}/hunts/${appId}/refresh`, { method: 'POST' }),
   syncStatus: (steamId: string) => request<SyncStatus>(`/players/${steamId}/sync`),
   startSync: (steamId: string, force = false) =>
     request<SyncStatus>(`/players/${steamId}/sync?force=${force}`, { method: 'POST' }),

@@ -11,10 +11,12 @@ import time
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import func, select
+
 from app import steam_client as steam
 from app.config import STEAM_ID
 from app.database import SessionLocal
-from app.models import Achievement, Game, Player, PlayerAchievement, PlayerGame
+from app.models import Achievement, Game, GameSnapshot, Player, PlayerAchievement, PlayerGame
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +102,44 @@ def needs_sync(game, player_game, playtime, force):
     return last_played is not None and last_played > synced_at  # played since
 
 
+def percentages_are_stale(game):
+    updated_at = as_utc(game.percentages_updated_at)
+    return updated_at is None or now_utc() - updated_at > PERCENTAGES_MAX_AGE
+
+
+def refresh_percentages(session, game):
+    """Fetch every achievement's global unlock %, then save today's snapshot."""
+    for api_name, percent in steam.get_global_percentages(game.app_id).items():
+        achievement = session.get(Achievement, (game.app_id, api_name))
+        if achievement is not None:
+            achievement.global_percent = percent
+    game.percentages_updated_at = now_utc()
+    session.flush()
+    save_snapshot(session, game.app_id)
+
+
+def save_snapshot(session, app_id):
+    """Record today's rarity numbers for one game (one row per game per day)."""
+    rarest, average, count = session.execute(
+        select(
+            func.min(Achievement.global_percent),
+            func.avg(Achievement.global_percent),
+            func.count(),
+        ).where(Achievement.app_id == app_id, Achievement.global_percent.is_not(None))
+    ).one()
+    if count == 0:
+        return
+    session.merge(
+        GameSnapshot(
+            app_id=app_id,
+            taken_on=now_utc().date(),
+            rarest_percent=rarest,
+            average_percent=round(average, 2),
+            achievement_count=count,
+        )
+    )
+
+
 def save_achievements(session, steam_id, game):
     """Fetch and save one game's achievements. Returns unlocked"""
     schema = steam.get_schema(game.app_id)
@@ -122,13 +162,8 @@ def save_achievements(session, steam_id, game):
         )
     session.flush()  # achievements must exist before unlocks can point at them
 
-    updated_at = as_utc(game.percentages_updated_at)
-    if updated_at is None or now_utc() - updated_at > PERCENTAGES_MAX_AGE:
-        for api_name, percent in steam.get_global_percentages(game.app_id).items():
-            achievement = session.get(Achievement, (game.app_id, api_name))
-            if achievement is not None:
-                achievement.global_percent = percent
-        game.percentages_updated_at = now_utc()
+    if percentages_are_stale(game):
+        refresh_percentages(session, game)
 
     known = {a["name"] for a in schema}
     unlocked = [
@@ -205,13 +240,8 @@ def sync_player(steam_id, force=False, only_app_id=None):
     }
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Sync Steam achievements into the database.")
-    parser.add_argument("--force", action="store_true", help="re-sync every game")
-    parser.add_argument("--game", type=int, help="only sync this appid")
-    parser.add_argument("--steam-id", default=STEAM_ID, help="defaults to STEAM_ID in .env")
-    args = parser.parse_args()
-
+def configure_cli_logging():
+    """Timestamped log lines for command-line tools."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s %(levelname)-7s %(message)s",
@@ -219,6 +249,16 @@ def main():
     )
     # httpx logs every URL at INFO level, and our URLs contain the API key
     logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Sync Steam achievements into the database.")
+    parser.add_argument("--force", action="store_true", help="re-sync every game")
+    parser.add_argument("--game", type=int, help="only sync this appid")
+    parser.add_argument("--steam-id", default=STEAM_ID, help="defaults to STEAM_ID in .env")
+    args = parser.parse_args()
+
+    configure_cli_logging()
 
     try:
         summary = sync_player(args.steam_id, force=args.force, only_app_id=args.game)
