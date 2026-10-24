@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Path
+from fastapi import Depends, HTTPException, Path, Request
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
@@ -39,3 +39,25 @@ def get_player(steam_id: SteamId, db: DbSession) -> Player:
 
 
 CurrentPlayer = Annotated[Player, Depends(get_player)]
+
+
+# --- Who is signed in, and are they allowed to change this? ---------------
+def current_user_id(request: Request) -> str | None:
+    """The SteamID of whoever is signed in, or None. Read from the signed cookie."""
+    return request.session.get("steam_id")
+
+
+CurrentUserId = Annotated[str | None, Depends(current_user_id)]
+
+
+def require_owner(steam_id: SteamId, user_id: CurrentUserId) -> str:
+    """Only the signed-in owner of a profile may change it."""
+    if user_id is None:
+        raise HTTPException(401, "Sign in through Steam first")
+    if user_id != steam_id:
+        raise HTTPException(403, "You can only change your own profile")
+    return user_id
+
+
+# Add to an endpoint with: dependencies=[OwnerOnly]
+OwnerOnly = Depends(require_owner)

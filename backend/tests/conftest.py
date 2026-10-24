@@ -15,15 +15,18 @@ from pathlib import Path
 # them on import. (load_dotenv never overrides variables that already exist.)
 _temp_dir = Path(tempfile.mkdtemp())
 os.environ["DATABASE_URL"] = f"sqlite:///{(_temp_dir / 'test.db').as_posix()}"
-os.environ["STEAM_API_KEY"] = "fake-test-key"
+os.environ["SECRET_KEY"] = "test-only-secret-key"
 
 import pytest  # noqa: E402
 import respx  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
+from app import sync_jobs  # noqa: E402
 from app.database import engine  # noqa: E402
+from app.deps import current_user_id  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Base  # noqa: E402
+from tests.fake_steam import PLAYER_ID  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -51,3 +54,18 @@ def steam():
 def client():
     """Calls our FastAPI app in-process, no server needed."""
     return TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def fresh_app_state():
+    """No sync jobs or pretend sign-ins left over from another test."""
+    sync_jobs._jobs.clear()
+    yield
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def signed_in():
+    """Pretend the test player is signed in, without going through Steam.
+    FastAPI lets tests swap any dependency for a stand-in like this."""
+    app.dependency_overrides[current_user_id] = lambda: PLAYER_ID

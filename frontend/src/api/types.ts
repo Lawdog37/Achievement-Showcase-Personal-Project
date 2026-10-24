@@ -118,3 +118,7 @@ export interface Overview {
   trending: TrendingGame[]
   snapshot_days: number
 }
+
+export interface Me {
+  steam_id: string
+}

@@ -7,6 +7,35 @@ import type { GameSort, GameStatus, SyncState } from '../api/types'
 // refresh all of them at once after a sync.
 const playerKey = (steamId: string) => ['player', steamId] as const
 
+/** Who is signed in, or null if nobody is. */
+export function useMe() {
+  return useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      try {
+        return await api.me()
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) return null // not signed in
+        throw error
+      }
+    },
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** True when the signed-in user owns this profile (and so may change it). */
+export function useIsOwner(steamId: string) {
+  return useMe().data?.steam_id === steamId
+}
+
+export function useLogout() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: api.logout,
+    onSuccess: () => queryClient.setQueryData(['me'], null),
+  })
+}
+
 /** Data for the Overview home page (not tied to any player). */
 export function useOverview() {
   return useQuery({

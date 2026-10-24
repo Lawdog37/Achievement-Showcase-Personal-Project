@@ -3,7 +3,10 @@
 import logging
 
 from fastapi import FastAPI
+from starlette.middleware.sessions import SessionMiddleware
 
+from app.config import PUBLIC_URL, SECRET_KEY
+from app.routers.auth import router as auth_router
 from app.routers.hunts import router as hunts_router
 from app.routers.overview import router as overview_router
 from app.routers.players import router as players_router
@@ -22,6 +25,17 @@ app = FastAPI(
     version="0.1.0",
     description="Steam achievements, rarest first.",
 )
+# Keeps track of who is signed in, using a cookie signed with SECRET_KEY.
+# The browser can store it but can't change it without the signature breaking.
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SECRET_KEY,
+    session_cookie="showcase_session",
+    max_age=30 * 24 * 60 * 60,  # stay signed in for 30 days
+    same_site="lax",  # not sent with requests from other sites: blocks CSRF attacks
+    https_only=PUBLIC_URL.startswith("https://"),  # online, only send it over HTTPS
+)
+app.include_router(auth_router)
 app.include_router(players_router)
 app.include_router(sync_router)
 app.include_router(hunts_router)

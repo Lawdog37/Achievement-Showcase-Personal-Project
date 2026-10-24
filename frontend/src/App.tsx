@@ -4,15 +4,17 @@ import NearCompletionPage from './pages/NearCompletionPage'
 import OverviewPage from './pages/OverviewPage'
 import PlayerLayout from './pages/PlayerLayout'
 import ProfilePage from './pages/ProfilePage'
+import { AccountMenu } from './components/AccountMenu'
 
 export default function App() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-800">
-        <div className="mx-auto max-w-6xl px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <Link to="/" className="text-lg font-semibold tracking-tight">
             Achievement Showcase
           </Link>
+          <AccountMenu />
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8">

@@ -82,7 +82,7 @@ def test_resolve_custom_profile_url(client, steam):
     assert response.json() == {"steam_id": PLAYER_ID}
 
 
-def test_sync_endpoint_runs_in_background(client, steam):
+def test_sync_endpoint_runs_in_background(client, steam, signed_in):
     setup_basic_library(steam)
 
     started = client.post(f"/api/players/{PLAYER_ID}/sync")

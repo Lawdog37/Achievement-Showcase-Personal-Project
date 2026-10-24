@@ -4,6 +4,7 @@ import type {
   GameStatus,
   Hunt,
   InProgress,
+  Me,
   Overview,
   Player,
   ShowcaseItem,
@@ -41,6 +42,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 // One function per endpoint. Components never build URLs themselves.
 export const api = {
   overview: () => request<Overview>('/overview'),
+  me: () => request<Me>('/auth/me'),
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
   resolve: (query: string) =>
     request<{ steam_id: string }>(`/resolve?q=${encodeURIComponent(query)}`),
   player: (steamId: string) => request<Player>(`/players/${steamId}`),

@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 _jobs: dict[str, dict] = {}
 _lock = threading.Lock()  # syncs run in other threads, so guard shared data
 
+# Each sync makes hundreds of Steam calls. Capping how many run at once
+# protects the server and the 100,000-calls-a-day Steam limit.
+MAX_RUNNING_SYNCS = 2
+
 
 def get_status(steam_id):
     with _lock:
@@ -23,16 +27,19 @@ def get_status(steam_id):
 
 
 def try_start(steam_id):
-    """Mark a sync as running. Returns False if one is already running."""
+    """Mark a sync as running. Returns "started", "already_running" or "busy"."""
     with _lock:
         if _jobs.get(steam_id, {}).get("state") == "running":
-            return False
+            return "already_running"
+        running = sum(1 for job in _jobs.values() if job["state"] == "running")
+        if running >= MAX_RUNNING_SYNCS:
+            return "busy"
         _jobs[steam_id] = {
             "steam_id": steam_id,
             "state": "running",
             "started_at": datetime.now(UTC),
         }
-        return True
+        return "started"
 
 
 def run(steam_id, force):
