@@ -4,9 +4,10 @@ import { PlayerHeader } from '../components/PlayerHeader'
 import { PlayerNav } from '../components/PlayerNav'
 import { ErrorBlock, LoadingBlock } from '../components/Status'
 import { SyncPanel } from '../components/SyncPanel'
-import { usePlayer } from '../hooks/usePlayerData'
+import { useIsOwner, usePlayer } from '../hooks/usePlayerData'
 import { useEffect } from 'react'
 import { rememberPlayer } from '../lib/recentPlayer'
+import { SignInLink } from '../components/AccountMenu'
 
 /**
  * The frame around every player page: loads the player, shows the header and
@@ -16,6 +17,7 @@ export default function PlayerLayout() {
   const { steamId = '' } = useParams() // from the URL: /player/:steamId/...
   const validId = /^\d{17}$/.test(steamId)
   const player = usePlayer(steamId, validId)
+  const isOwner = useIsOwner(steamId)
   // Remember who was viewed last, so the Overview page can say "welcome back"
   useEffect(() => {
     if (player.data) {
@@ -36,7 +38,13 @@ export default function PlayerLayout() {
             This profile isn't in the database. Sync it to fetch its games and achievements from
             Steam.
           </p>
-          <SyncPanel steamId={steamId} />
+          {isOwner ? (
+            <SyncPanel steamId={steamId} />
+          ) : (
+            <p className="text-sm text-slate-400">
+              Is this your profile? <SignInLink>Sign in through Steam</SignInLink> to sync it.
+            </p>
+          )}
         </div>
       )
     }

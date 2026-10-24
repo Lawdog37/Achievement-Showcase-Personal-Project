@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router'
 import type { Hunt } from '../api/types'
 import { ProgressBar } from '../components/ProgressBar'
 import { ErrorBlock, LoadingBlock } from '../components/Status'
-import { useHuntActions, useHunts } from '../hooks/usePlayerData'
+import { useHuntActions, useHunts, useIsOwner } from '../hooks/usePlayerData'
 import { timeAgo } from '../lib/format'
 import { achievementDescription, rarityText } from '../lib/hunts'
 import { rarityTier } from '../lib/rarity'
@@ -13,6 +13,7 @@ const PREVIEW_COUNT = 8 // locked achievements shown before "Show all"
 function HuntCard({ hunt, steamId }: { hunt: Hunt; steamId: string }) {
   const { game, locked } = hunt
   const { remove, refresh } = useHuntActions(steamId)
+  const isOwner = useIsOwner(steamId)
   const [showAll, setShowAll] = useState(false)
   const visible = showAll ? locked : locked.slice(0, PREVIEW_COUNT)
   const refreshing = refresh.isPending && refresh.variables === game.app_id
@@ -31,24 +32,27 @@ function HuntCard({ hunt, steamId }: { hunt: Hunt; steamId: string }) {
             <ProgressBar percent={game.pct} />
           </div>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => refresh.mutate(game.app_id)}
-            disabled={refreshing}
-            title="Fetch this game's latest achievements from Steam"
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:border-slate-500 disabled:opacity-50"
-          >
-            {refreshing ? 'Refreshing…' : 'Refresh'}
-          </button>
-          <button
-            type="button"
-            onClick={() => remove.mutate(game.app_id)}
-            className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:border-rose-500/60 hover:text-rose-300"
-          >
-            Stop hunting
-          </button>
-        </div>
+        {/* Only the owner can refresh or stop hunting */}
+        {isOwner && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => refresh.mutate(game.app_id)}
+              disabled={refreshing}
+              title="Fetch this game's latest achievements from Steam"
+              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:border-slate-500 disabled:opacity-50"
+            >
+              {refreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+            <button
+              type="button"
+              onClick={() => remove.mutate(game.app_id)}
+              className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 hover:border-rose-500/60 hover:text-rose-300"
+            >
+              Stop hunting
+            </button>
+          </div>
+        )}
       </div>
       {refresh.error && <p className="mt-2 text-sm text-rose-400">{refresh.error.message}</p>}
 
@@ -103,6 +107,7 @@ function HuntCard({ hunt, steamId }: { hunt: Hunt; steamId: string }) {
 export default function HuntingPage() {
   const { steamId = '' } = useParams()
   const { data, isPending, error } = useHunts(steamId)
+  const isOwner = useIsOwner(steamId)
 
   if (isPending) return <LoadingBlock label="Loading your hunts…" />
   if (error) return <ErrorBlock message={error.message} />
@@ -110,7 +115,9 @@ export default function HuntingPage() {
   if (data.length === 0) {
     return (
       <div className="mt-6 rounded-xl border border-dashed border-slate-700 p-8 text-center">
-        <p className="text-lg font-semibold">You're not hunting any games yet</p>
+        <p className="text-lg font-semibold">
+          {isOwner ? "You're not hunting any games yet" : 'Not hunting any games yet'}
+        </p>
         <p className="mt-2 text-slate-400">
           Pick the games you're going for on the{' '}
           <Link to="../near-completion" className="text-sky-400 hover:underline">

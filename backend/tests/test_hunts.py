@@ -8,6 +8,10 @@ from tests.fake_steam import PLAYER_ID, setup_basic_library
 HUNTS = f"/api/players/{PLAYER_ID}/hunts"
 
 
+# Changing hunts needs a signed-in owner, so every test here starts signed in
+pytestmark = pytest.mark.usefixtures("signed_in")
+
+
 @pytest.fixture
 def library(steam):
     """Game 10 has 3 achievements (2 unlocked), game 20 has none, 30 is unplayed."""

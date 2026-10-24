@@ -1,8 +1,10 @@
 import type { Player } from '../api/types'
 import { timeAgo } from '../lib/format'
 import { SyncPanel } from './SyncPanel'
+import { useIsOwner } from '../hooks/usePlayerData'
 
 export function PlayerHeader({ player }: { player: Player }) {
+  const isOwner = useIsOwner(player.steam_id)
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-4">
@@ -28,7 +30,7 @@ export function PlayerHeader({ player }: { player: Player }) {
           </p>
         </div>
       </div>
-      <SyncPanel steamId={player.steam_id} />
+      {isOwner && <SyncPanel steamId={player.steam_id} />}
     </div>
   )
 }

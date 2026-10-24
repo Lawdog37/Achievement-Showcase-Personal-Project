@@ -154,3 +154,7 @@ class OverviewOut(Schema):
     most_played: list[ChartGame]
     trending: list[TrendingGame]
     snapshot_days: int
+
+
+class MeOut(Schema):
+    steam_id: str

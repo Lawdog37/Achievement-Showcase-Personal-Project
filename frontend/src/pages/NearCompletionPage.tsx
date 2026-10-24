@@ -4,7 +4,7 @@ import type { GameCompletion, GameSort, GameStatus } from '../api/types'
 import { HuntButton } from '../components/HuntButton'
 import { ProgressBar } from '../components/ProgressBar'
 import { ErrorBlock, LoadingBlock } from '../components/Status'
-import { useGames, useHunts } from '../hooks/usePlayerData'
+import { useGames, useHunts, useIsOwner } from '../hooks/usePlayerData'
 import { timeAgo } from '../lib/format'
 import { filterByName } from '../lib/games'
 
@@ -26,10 +26,12 @@ function GameRow({
   game,
   steamId,
   hunted,
+  canHunt,
 }: {
   game: GameCompletion
   steamId: string
   hunted: boolean
+  canHunt: boolean
 }) {
   return (
     <li className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 p-3">
@@ -49,7 +51,9 @@ function GameRow({
           {timeAgo(game.last_played_at)}
         </p>
       </div>
-      {game.remaining > 0 && <HuntButton steamId={steamId} appId={game.app_id} hunted={hunted} />}
+      {canHunt && game.remaining > 0 && (
+        <HuntButton steamId={steamId} appId={game.app_id} hunted={hunted} />
+      )}
     </li>
   )
 }
@@ -65,6 +69,7 @@ export default function NearCompletionPage() {
 
   const { data, isPending, error, isPlaceholderData } = useGames(steamId, status, sort)
   const hunts = useHunts(steamId)
+  const isOwner = useIsOwner(steamId)
   const huntedIds = new Set(hunts.data?.map((hunt) => hunt.game.app_id))
 
   function update(key: string, value: string) {
@@ -132,6 +137,7 @@ export default function NearCompletionPage() {
                 game={game}
                 steamId={steamId}
                 hunted={huntedIds.has(game.app_id)}
+                canHunt={isOwner}
               />
             ))}
           </ul>

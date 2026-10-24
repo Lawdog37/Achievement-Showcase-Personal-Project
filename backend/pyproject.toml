@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.20",
     "fastapi[standard]>=0.161",
     "httpx>=0.28",
+    "itsdangerous>=2.2",  # signs the login cookie so it can't be forged
     "python-dotenv>=1.2",
     "sqlalchemy>=2.0",
 ]
