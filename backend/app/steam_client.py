@@ -101,3 +101,28 @@ def resolve_vanity_url(name):
     data = steam_get("ISteamUser/ResolveVanityURL/v1", vanityurl=name)
     response = data["response"]
     return response["steamid"] if response.get("success") == 1 else None
+
+
+def get_most_played():
+    """Steam's daily chart of the 100 most-played games.
+    Each entry has: rank, appid, last_week_rank, peak_in_game."""
+    data = steam_get("ISteamChartsService/GetMostPlayedGames/v1")
+    return data["response"].get("ranks", [])
+
+
+STORE_URL = "https://store.steampowered.com/api/appdetails"
+
+
+def get_store_details(app_id):
+    """A game's real name and banner image from the Steam Store.
+    The Store API isn't officially documented and limits how often you can call
+    """
+    try:
+        response = client.get(STORE_URL, params={"appids": app_id, "filters": "basic"})
+        entry = response.json().get(str(app_id), {}) if response.is_success else {}
+    except (httpx.HTTPError, ValueError):
+        return None
+    if not entry.get("success"):
+        return None
+    data = entry.get("data", {})
+    return {"name": data.get("name"), "capsule_url": data.get("capsule_image")}

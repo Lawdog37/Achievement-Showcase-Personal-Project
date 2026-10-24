@@ -3,9 +3,20 @@ const numberFormat = new Intl.NumberFormat()
 /** 4891 -> "4,891" (uses the visitor's own number style) */
 export const formatNumber = (n: number) => numberFormat.format(n)
 
+const compactFormat = new Intl.NumberFormat(undefined, {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+})
+
+/** 1274983 -> "1.3M" */
+export const formatCompact = (n: number) => compactFormat.format(n)
+
 /** ISO time -> "Jun 21, 2024" in the visitor's own time zone */
 export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, {
+  // A date with no time ("2026-10-24") is read as midnight UTC, which is still the
+  // day before in the Americas. Add a local midnight so the day stays the same.
+  const value = /^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T00:00:00` : iso
+  return new Date(value).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

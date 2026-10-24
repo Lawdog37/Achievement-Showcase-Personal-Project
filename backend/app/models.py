@@ -26,6 +26,7 @@ class Game(Base):
     app_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     name: Mapped[str]
     icon_url: Mapped[str | None]
+    capsule_url: Mapped[str | None]
     notes: Mapped[str | None]
 
     # None = never checked, True/False = whether the game has achievements
@@ -104,3 +105,15 @@ class GameSnapshot(Base):
     rarest_percent: Mapped[float]
     average_percent: Mapped[float]
     achievement_count: Mapped[int]
+
+
+class ChartEntry(Base):
+    """One row of Steam's daily "most played games" chart."""
+
+    __tablename__ = "chart_entries"
+
+    taken_on: Mapped[date] = mapped_column(Date, primary_key=True)
+    rank: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    app_id: Mapped[int] = mapped_column(ForeignKey("games.app_id"))
+    last_week_rank: Mapped[int | None]
+    peak_players: Mapped[int]

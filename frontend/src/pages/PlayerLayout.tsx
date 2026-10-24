@@ -5,6 +5,8 @@ import { PlayerNav } from '../components/PlayerNav'
 import { ErrorBlock, LoadingBlock } from '../components/Status'
 import { SyncPanel } from '../components/SyncPanel'
 import { usePlayer } from '../hooks/usePlayerData'
+import { useEffect } from 'react'
+import { rememberPlayer } from '../lib/recentPlayer'
 
 /**
  * The frame around every player page: loads the player, shows the header and
@@ -14,6 +16,13 @@ export default function PlayerLayout() {
   const { steamId = '' } = useParams() // from the URL: /player/:steamId/...
   const validId = /^\d{17}$/.test(steamId)
   const player = usePlayer(steamId, validId)
+  // Remember who was viewed last, so the Overview page can say "welcome back"
+  useEffect(() => {
+    if (player.data) {
+      const { steam_id, name, avatar_url } = player.data
+      rememberPlayer({ steamId: steam_id, name, avatarUrl: avatar_url })
+    }
+  }, [player.data])
 
   if (!validId) return <ErrorBlock message="That isn't a valid SteamID." />
   if (player.isPending) return <LoadingBlock label="Loading profile…" />

@@ -4,7 +4,7 @@ These are separate from models.py on purpose: database tables can change
 without breaking the API, and the API never leaks columns by accident.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, ConfigDict
@@ -125,3 +125,32 @@ class SyncStatus(Schema):
 
 class ResolveOut(Schema):
     steam_id: str
+
+
+class ChartGame(Schema):
+    rank: int
+    last_week_rank: int | None
+    peak_players: int
+    app_id: int
+    name: str
+    image_url: str | None
+    has_achievements: bool | None
+    rarest_percent: float | None  # None until we have a snapshot
+    achievement_count: int | None
+
+
+class TrendingGame(Schema):
+    app_id: int
+    name: str
+    image_url: str | None
+    rarest_before: float
+    rarest_now: float
+    change: float
+    days: int
+
+
+class OverviewOut(Schema):
+    chart_date: date | None
+    most_played: list[ChartGame]
+    trending: list[TrendingGame]
+    snapshot_days: int

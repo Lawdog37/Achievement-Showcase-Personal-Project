@@ -7,6 +7,15 @@ import type { GameSort, GameStatus, SyncState } from '../api/types'
 // refresh all of them at once after a sync.
 const playerKey = (steamId: string) => ['player', steamId] as const
 
+/** Data for the Overview home page (not tied to any player). */
+export function useOverview() {
+  return useQuery({
+    queryKey: ['overview'],
+    queryFn: api.overview,
+    staleTime: 10 * 60_000, // it only changes once a day, so 10 minutes is plenty fresh
+  })
+}
+
 export function usePlayer(steamId: string, enabled = true) {
   return useQuery({
     queryKey: [...playerKey(steamId), 'profile'],
