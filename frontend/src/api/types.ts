@@ -89,3 +89,32 @@ export interface Hunt {
   added_at: string
   locked: HuntAchievement[] // easiest first
 }
+
+export interface ChartGame {
+  rank: number
+  last_week_rank: number | null
+  peak_players: number
+  app_id: number
+  name: string
+  image_url: string | null
+  has_achievements: boolean | null
+  rarest_percent: number | null
+  achievement_count: number | null
+}
+
+export interface TrendingGame {
+  app_id: number
+  name: string
+  image_url: string | null
+  rarest_before: number
+  rarest_now: number
+  change: number
+  days: number
+}
+
+export interface Overview {
+  chart_date: string | null
+  most_played: ChartGame[]
+  trending: TrendingGame[]
+  snapshot_days: number
+}

@@ -4,13 +4,22 @@ Try it (from the backend folder):  python -m app.queries
 """
 
 from collections import Counter, defaultdict
+from datetime import UTC, datetime, timedelta
 from statistics import mean
 
 from sqlalchemy import and_, func, select
 
 from app.config import STEAM_ID
 from app.database import SessionLocal
-from app.models import Achievement, Game, Hunt, PlayerAchievement, PlayerGame
+from app.models import (
+    Achievement,
+    ChartEntry,
+    Game,
+    GameSnapshot,
+    Hunt,
+    PlayerAchievement,
+    PlayerGame,
+)
 
 
 def rarest_unlocked(session, steam_id, limit=10):
@@ -223,6 +232,96 @@ def player_stats(session, steam_id):
         "hours_played": round(minutes / 60, 1),
         "unlocks_by_month": [{"month": m, "count": per_month[m]} for m in sorted(per_month)],
     }
+
+
+# --- Overview page -------------------------------------------------------
+def most_played(session):
+    """The latest saved chart, with each game's rarest achievement %.
+    Returns (chart_date, rows), or (None, []) before the first chart is saved."""
+    chart_date = session.scalar(select(func.max(ChartEntry.taken_on)))
+    if chart_date is None:
+        return None, []
+
+    # Each game's newest snapshot date, joined back to get that snapshot's numbers
+    newest = (
+        select(GameSnapshot.app_id, func.max(GameSnapshot.taken_on).label("taken_on"))
+        .group_by(GameSnapshot.app_id)
+        .subquery()
+    )
+    stmt = (
+        select(
+            ChartEntry.rank,
+            ChartEntry.last_week_rank,
+            ChartEntry.peak_players,
+            Game.app_id,
+            Game.name,
+            func.coalesce(Game.capsule_url, Game.icon_url).label("image_url"),
+            Game.has_achievements,
+            GameSnapshot.rarest_percent,
+            GameSnapshot.achievement_count,
+        )
+        .join(Game, Game.app_id == ChartEntry.app_id)
+        .outerjoin(newest, newest.c.app_id == ChartEntry.app_id)
+        .outerjoin(
+            GameSnapshot,
+            and_(
+                GameSnapshot.app_id == newest.c.app_id,
+                GameSnapshot.taken_on == newest.c.taken_on,
+            ),
+        )
+        .where(ChartEntry.taken_on == chart_date)
+        .order_by(ChartEntry.rank)
+    )
+    return chart_date, session.execute(stmt).all()
+
+
+def trending_games(session, days=7, limit=10):
+    """Games whose rarest achievement is being unlocked by a growing share of
+    players over the last `days` days: a sign more people are finishing them."""
+    since = datetime.now(UTC).date() - timedelta(days=days)
+    rows = session.execute(
+        select(GameSnapshot.app_id, GameSnapshot.taken_on, GameSnapshot.rarest_percent)
+        .where(GameSnapshot.taken_on >= since)
+        .order_by(GameSnapshot.app_id, GameSnapshot.taken_on)
+    ).all()
+
+    # Rows are sorted by game then date, so the first and last per game
+    # are its oldest and newest snapshots in the window
+    oldest, newest = {}, {}
+    for row in rows:
+        oldest.setdefault(row.app_id, row)
+        newest[row.app_id] = row
+
+    rising = []
+    for app_id, new in newest.items():
+        old = oldest[app_id]
+        change = new.rarest_percent - old.rarest_percent
+        if new.taken_on > old.taken_on and change > 0:
+            rising.append((change, old, new))
+    rising.sort(key=lambda item: item[0], reverse=True)
+    rising = rising[:limit]
+
+    ids = [new.app_id for _, _, new in rising]
+    games = {
+        game.app_id: game for game in session.scalars(select(Game).where(Game.app_id.in_(ids)))
+    }
+    return [
+        {
+            "app_id": new.app_id,
+            "name": games[new.app_id].name,
+            "image_url": games[new.app_id].capsule_url or games[new.app_id].icon_url,
+            "rarest_before": old.rarest_percent,
+            "rarest_now": new.rarest_percent,
+            "change": round(change, 2),
+            "days": (new.taken_on - old.taken_on).days,
+        }
+        for change, old, new in rising
+    ]
+
+
+def snapshot_days(session):
+    """How many different days we have snapshots for."""
+    return session.scalar(select(func.count(func.distinct(GameSnapshot.taken_on))))
 
 
 if __name__ == "__main__":

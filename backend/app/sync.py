@@ -140,13 +140,11 @@ def save_snapshot(session, app_id):
     )
 
 
-def save_achievements(session, steam_id, game):
-    """Fetch and save one game's achievements. Returns unlocked"""
+def save_schema(session, game):
+    """Fetch a game's list of achievements and save it. Returns the list
+    (empty if the game has none)."""
     schema = steam.get_schema(game.app_id)
     game.has_achievements = bool(schema)
-    if not schema:
-        return 0
-
     for a in schema:
         # merge() only updates the fields we pass, so global_percent is kept
         session.merge(
@@ -161,6 +159,14 @@ def save_achievements(session, steam_id, game):
             )
         )
     session.flush()  # achievements must exist before unlocks can point at them
+    return schema
+
+
+def save_achievements(session, steam_id, game):
+    """Fetch and save one game's achievements. Returns unlocked"""
+    schema = save_schema(session, game)
+    if not schema:
+        return 0
 
     if percentages_are_stale(game):
         refresh_percentages(session, game)

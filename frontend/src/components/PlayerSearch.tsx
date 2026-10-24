@@ -3,7 +3,8 @@ import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { api } from '../api/client'
 
-export default function HomePage() {
+/** The "enter your Steam profile" box. Moved here from the old HomePage. */
+export function PlayerSearch() {
   const [input, setInput] = useState('')
   const navigate = useNavigate()
   const resolve = useMutation({
@@ -17,13 +18,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl py-16 text-center">
-      <h1 className="text-4xl font-bold tracking-tight">Show off your rarest achievements</h1>
-      <p className="mt-3 text-slate-400">
-        Enter a Steam profile URL, custom name or SteamID. The profile's game details must be
-        public.
-      </p>
-      <form onSubmit={handleSubmit} className="mt-8 flex gap-2">
+    <div>
+      <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}

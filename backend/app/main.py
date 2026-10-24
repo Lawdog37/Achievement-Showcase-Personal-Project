@@ -5,6 +5,7 @@ import logging
 from fastapi import FastAPI
 
 from app.routers.hunts import router as hunts_router
+from app.routers.overview import router as overview_router
 from app.routers.players import router as players_router
 from app.routers.sync import router as sync_router
 
@@ -24,6 +25,7 @@ app = FastAPI(
 app.include_router(players_router)
 app.include_router(sync_router)
 app.include_router(hunts_router)
+app.include_router(overview_router)
 
 
 @app.get("/api/health", tags=["meta"])

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { timeAgo } from './format'
+import { formatDate, timeAgo } from './format'
 
 describe('timeAgo', () => {
   // Freeze the clock so "now" is the same every time the test runs
@@ -25,5 +25,11 @@ describe('timeAgo', () => {
 
   it('counts days', () => {
     expect(timeAgo('2026-06-12T12:00:00Z')).toMatch(/3 days ago/)
+  })
+})
+
+describe('formatDate', () => {
+  it('keeps a plain date on the same day in every time zone', () => {
+    expect(formatDate('2026-10-24')).toMatch(/24/)
   })
 })
