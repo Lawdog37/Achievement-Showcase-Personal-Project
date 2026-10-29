@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type KeyValueStore, recallPlayer, rememberPlayer } from './recentPlayer'
+import { type KeyValueStore, recallPlayer, rememberPlayer, forgetPlayer } from './recentPlayer'
 
 /** A pretend localStorage that just keeps values in a Map. */
 function fakeStorage(): KeyValueStore {
@@ -7,6 +7,7 @@ function fakeStorage(): KeyValueStore {
   return {
     getItem: (key) => values.get(key) ?? null,
     setItem: (key, value) => void values.set(key, value),
+    removeItem: (key) => void values.delete(key),
   }
 }
 
@@ -34,5 +35,12 @@ describe('recent player', () => {
   it('copes with no storage at all', () => {
     expect(recallPlayer(null)).toBeNull()
     expect(() => rememberPlayer(PLAYER, null)).not.toThrow()
+  })
+
+  it('forgets a player', () => {
+    const storage = fakeStorage()
+    rememberPlayer(PLAYER, storage)
+    forgetPlayer(storage)
+    expect(recallPlayer(storage)).toBeNull()
   })
 })

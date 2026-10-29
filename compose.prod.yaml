@@ -1,0 +1,56 @@
+# Extra settings for the live server, layered on top of compose.yaml:
+#   docker compose -f compose.yaml -f compose.prod.yaml up -d --build
+#
+# What's different from running on your PC:
+#   - visitors arrive through Cloudflare Tunnel, never through an open port
+#   - PUBLIC_URL is the real https:// address (which also makes the login cookie HTTPS-only)
+#   - the database is backed up every night into ./backups
+
+services:
+  backend:
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env to your https:// address}
+
+  frontend:
+    # No port on the server: nothing on your network (or the internet) can reach
+    # the site directly. Only the tunnel container talks to it.
+    ports: !reset []
+
+  tunnel:
+    image: cloudflare/cloudflared:2026.10.5
+    # Makes an OUTGOING connection to Cloudflare; visitors reach the site through it.
+    # Which address forwards to which container is set in the Cloudflare dashboard.
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?Set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - frontend
+    restart: unless-stopped
+
+  backup:
+    image: postgres:18-alpine # same version as the database, so pg_dump matches it
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ./backups:/backups # a "backups" folder next to this file on the server
+    # Back up now, then every 24 hours. Keep 14 days of backups.
+    # ($$ is how compose files write a single $ for the shell.)
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -o pipefail
+        while true; do
+          file=/backups/showcase-$$(date +%F).sql.gz
+          if pg_dump -h db -U showcase -d showcase --clean --if-exists | gzip > "$$file"; then
+            echo "Backup saved: $$file"
+          else
+            echo "BACKUP FAILED" >&2
+            rm -f "$$file"
+          fi
+          find /backups -name 'showcase-*.sql.gz' -mtime +14 -delete
+          sleep 86400
+        done
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped

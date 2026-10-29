@@ -62,6 +62,7 @@ export const api = {
   refreshHunt: (steamId: string, appId: number) =>
     request<void>(`/players/${steamId}/hunts/${appId}/refresh`, { method: 'POST' }),
   syncStatus: (steamId: string) => request<SyncStatus>(`/players/${steamId}/sync`),
+  deleteMyData: (steamId: string) => request<void>(`/players/${steamId}`, { method: 'DELETE' }),
   startSync: (steamId: string, force = false) =>
     request<SyncStatus>(`/players/${steamId}/sync?force=${force}`, { method: 'POST' }),
 }

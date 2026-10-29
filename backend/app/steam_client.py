@@ -25,6 +25,10 @@ class SteamAPIError(Exception):
         self.status_code = status_code
 
 
+class PrivateAchievementsError(SteamAPIError):
+    """Steam won't share this player's achievements: their game details aren't public."""
+
+
 def steam_get(path, **params):
     """Call a Steam endpoint, retrying temporary failures with growing waits"""
     if not STEAM_API_KEY:
@@ -78,8 +82,16 @@ def get_player_achievements(steam_id, app_id):
             l="english",
         )
     except SteamAPIError as error:
-        if error.status_code in (400, 403):
-            return []
+        if error.status_code == 400:
+            return []  # this game has no achievement stats: genuinely nothing to fetch
+        if error.status_code == 403:
+            # NOT the same as "no achievements": Steam is refusing to tell us.
+            # Saying so loudly beats silently storing zero unlocks.
+            raise PrivateAchievementsError(
+                "Steam won't share this profile's achievements. In Steam, go to "
+                "Edit Profile > Privacy Settings, set Game details to Public, then sync again.",
+                403,
+            ) from None
         raise
     return data["playerstats"].get("achievements", [])
 

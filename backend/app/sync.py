@@ -229,6 +229,11 @@ def sync_player(steam_id, force=False, only_app_id=None):
                 else:
                     logger.info("%s: no achievements", label)
                 time.sleep(DELAY_BETWEEN_GAMES)
+            except steam.PrivateAchievementsError as error:
+                # Every other game would be refused too, so stop the whole sync.
+                # Nothing for this game is saved, so the next sync tries it again.
+                session.rollback()
+                raise SyncError(str(error)) from None
             except (steam.SteamAPIError, KeyError, ValueError) as error:
                 session.rollback()  # undo this game's half-finished changes
                 counts["failed"] += 1

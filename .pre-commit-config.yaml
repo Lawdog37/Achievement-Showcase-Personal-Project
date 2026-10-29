@@ -8,6 +8,7 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+        args: [--unsafe] # syntax only, so Docker Compose tags like !reset are allowed
       - id: check-toml
       - id: check-added-large-files # stops you committing a database by accident
       - id: detect-private-key
