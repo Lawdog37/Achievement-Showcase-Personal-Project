@@ -4,7 +4,7 @@
 # Node and node_modules never make it into the final image, so it stays small.
 
 # ---- Stage 1: build ----
-FROM node:24-alpine AS build
+FROM node:25-alpine AS build
 WORKDIR /app
 
 # Install packages first (cached until package-lock.json changes)
