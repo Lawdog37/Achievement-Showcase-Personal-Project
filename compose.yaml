@@ -1,19 +1,44 @@
-# Runs the whole app with one command:  docker compose up --build
+# Runs the whole app with one command:  docker compose up -d --build
 # Then open http://localhost:8080
 name: achievement-showcase
 
+# Settings shared by the backend and the scheduler, which run the same code.
+# "&backend-settings" names this block; "<<: *backend-settings" copies it in below.
+x-backend-settings: &backend-settings
+  build: ./backend
+  env_file:
+    - path: .env # STEAM_API_KEY, SECRET_KEY and POSTGRES_PASSWORD live here
+      required: false
+  environment:
+    # Where people reach the site; Steam sends signed-in users back here.
+    # Overrides any PUBLIC_URL in .env, which is for the dev servers.
+    PUBLIC_URL: http://localhost:8080
+    DATABASE_URL: postgresql+psycopg://showcase:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/showcase
+  restart: unless-stopped
+
 services:
-  backend:
-    build: ./backend
-    env_file:
-      - path: .env # your STEAM_API_KEY lives here (never baked into the image)
-        required: false
+  db:
+    image: postgres:18-alpine
     environment:
-      # Where people reach the site; Steam sends signed-in users back here.
-      # Overrides any PUBLIC_URL in .env, which is for the dev servers.
-      PUBLIC_URL: http://localhost:8080
+      POSTGRES_USER: showcase
+      POSTGRES_DB: showcase
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     volumes:
-      - app-data:/data # the database survives restarts and rebuilds
+      # Postgres 18 keeps its data in a folder inside here, so mount the parent
+      - pg-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U showcase -d showcase"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # No "ports:" on purpose: only our own containers can reach the database
+
+  backend:
+    <<: *backend-settings
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       # "Healthy" once the API answers. The frontend waits for this.
       test:
@@ -27,9 +52,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    restart: unless-stopped
     # No "ports:" on purpose: only the frontend can reach the API,
     # not the rest of your network.
+
+  scheduler:
+    <<: *backend-settings
+    command: ["python", "-m", "app.scheduler"] # runs the daily job every day
+    depends_on:
+      backend:
+        condition: service_healthy # the backend applies migrations when it starts
 
   frontend:
     build: ./frontend
@@ -41,4 +72,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  app-data:
+  pg-data:

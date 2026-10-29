@@ -5,7 +5,11 @@ from sqlalchemy.orm import sessionmaker
 
 from app.config import DATABASE_URL
 
-engine = create_engine(DATABASE_URL)
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
+
+# pool_pre_ping: before reusing a connection, check it's still alive. Postgres
+# (or the network) can quietly close connections that sat idle for a while.
+engine = create_engine(DATABASE_URL, pool_pre_ping=not IS_SQLITE)
 SessionLocal = sessionmaker(bind=engine)
 
 

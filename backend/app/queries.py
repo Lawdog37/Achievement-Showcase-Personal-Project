@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 from datetime import UTC, datetime, timedelta
 from statistics import mean
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import Numeric, and_, cast, func, select
 
 from app.config import STEAM_ID
 from app.database import SessionLocal
@@ -72,7 +72,8 @@ def _owned_achievements(steam_id, *columns):
 # Reusable pieces for the per-game counts
 TOTAL = func.count(Achievement.api_name)
 UNLOCKED = func.count(PlayerAchievement.api_name)
-PCT = func.round(100.0 * UNLOCKED / TOTAL, 1)
+# Postgres can only round exact decimals (Numeric), not floats, so convert first
+PCT = func.round(cast(100.0 * UNLOCKED / TOTAL, Numeric), 1)
 
 
 def _completion_query(steam_id):

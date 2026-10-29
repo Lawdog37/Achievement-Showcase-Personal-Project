@@ -14,7 +14,11 @@ from pathlib import Path
 # These must be set BEFORE the app is imported, because app/config.py reads
 # them on import. (load_dotenv never overrides variables that already exist.)
 _temp_dir = Path(tempfile.mkdtemp())
-os.environ["DATABASE_URL"] = f"sqlite:///{(_temp_dir / 'test.db').as_posix()}"
+# Tests use a throwaway SQLite file, unless TEST_DATABASE_URL points at a test
+# Postgres database (CI does that, so every test also runs on Postgres).
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL") or (
+    f"sqlite:///{(_temp_dir / 'test.db').as_posix()}"
+)
 os.environ["STEAM_API_KEY"] = "fake-test-key"
 os.environ["SECRET_KEY"] = "test-only-secret-key"
 
