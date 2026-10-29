@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useEffect, useRef } from 'react'
 import { ApiError, api } from '../api/client'
 import type { GameSort, GameStatus, SyncState } from '../api/types'
+import { forgetPlayer } from '../lib/recentPlayer'
 
 // Every query for one player starts with ['player', steamId], so we can
 // refresh all of them at once after a sync.
@@ -33,6 +34,19 @@ export function useLogout() {
   return useMutation({
     mutationFn: api.logout,
     onSuccess: () => queryClient.setQueryData(['me'], null),
+  })
+}
+
+/** Delete everything stored about this player. The server also signs them out. */
+export function useDeleteMyData(steamId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.deleteMyData(steamId),
+    onSuccess: () => {
+      queryClient.setQueryData(['me'], null) // signed out
+      queryClient.removeQueries({ queryKey: playerKey(steamId) }) // forget cached data
+      forgetPlayer() // and the "welcome back" card
+    },
   })
 }
 

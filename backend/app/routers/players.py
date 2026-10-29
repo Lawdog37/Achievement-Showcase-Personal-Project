@@ -3,10 +3,12 @@
 import re
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
+from sqlalchemy import delete
 
 from app import queries, steam_client
-from app.deps import CurrentPlayer, DbSession
+from app.deps import CurrentPlayer, DbSession, OwnerOnly, SteamId
+from app.models import Hunt, Player, PlayerAchievement, PlayerGame
 from app.schemas import (
     GameCompletion,
     InProgressOut,
@@ -94,3 +96,16 @@ def read_games(
 ):
     """Every game with achievements and its completion, filtered and sorted."""
     return queries.player_games(db, player.steam_id, status, sort)
+
+
+@router.delete("/players/{steam_id}", status_code=204, dependencies=[OwnerOnly])
+def delete_my_data(steam_id: SteamId, db: DbSession, request: Request):
+    """Delete everything stored about you, then sign you out.
+
+    Games, achievement lists and rarity snapshots stay: they're about the games,
+    not about you. Syncing again later simply starts fresh.
+    """
+    for model in (Hunt, PlayerAchievement, PlayerGame, Player):  # children before parent
+        db.execute(delete(model).where(model.steam_id == steam_id))
+    db.commit()
+    request.session.clear()

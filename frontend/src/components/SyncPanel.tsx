@@ -18,14 +18,27 @@ export function SyncPanel({ steamId }: { steamId: string }) {
 
   return (
     <div className="flex flex-col items-start gap-2 sm:items-end">
-      <button
-        type="button"
-        onClick={() => startSync.mutate(false)}
-        disabled={running}
-        className="rounded-lg bg-sky-500 px-4 py-2 font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-wait disabled:opacity-60"
-      >
-        {running ? 'Syncing…' : 'Sync now'}
-      </button>
+      <div className="flex gap-2">
+        {/* Re-checks every game, not just ones played since the last sync.
+            Useful after changing Steam privacy settings. */}
+        <button
+          type="button"
+          onClick={() => startSync.mutate(true)}
+          disabled={running}
+          title="Re-check every game, even ones that haven't changed"
+          className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-slate-500 disabled:opacity-60"
+        >
+          Full re-sync
+        </button>
+        <button
+          type="button"
+          onClick={() => startSync.mutate(false)}
+          disabled={running}
+          className="rounded-lg bg-sky-500 px-4 py-2 font-medium text-slate-950 hover:bg-sky-400 disabled:cursor-wait disabled:opacity-60"
+        >
+          {running ? 'Syncing…' : 'Sync now'}
+        </button>
+      </div>
       {message && (
         <p
           className={`max-w-xs text-xs ${data?.state === 'failed' ? 'text-rose-400' : 'text-slate-400'}`}

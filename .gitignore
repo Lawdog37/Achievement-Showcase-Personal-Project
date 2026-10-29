@@ -233,3 +233,6 @@ data/
 
 #Ignoring Backup Test
 backup*.sql
+
+# Nightly backups on the server contain user data: never commit them
+backups/

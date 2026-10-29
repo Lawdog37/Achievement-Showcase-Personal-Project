@@ -5,6 +5,7 @@ import OverviewPage from './pages/OverviewPage'
 import PlayerLayout from './pages/PlayerLayout'
 import ProfilePage from './pages/ProfilePage'
 import { AccountMenu } from './components/AccountMenu'
+import PrivacyPage from './pages/PrivacyPage'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="near-completion" element={<NearCompletionPage />} />
             <Route path="hunting" element={<HuntingPage />} />
           </Route>
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="*" element={<p className="text-slate-400">Page not found.</p>} />
         </Routes>
       </main>
@@ -35,7 +37,10 @@ export default function App() {
         <a href="https://store.steampowered.com" className="hover:text-slate-300">
           Powered by Steam
         </a>
-        . Not affiliated with Valve.
+        . Not affiliated with Valve. ·{' '}
+        <Link to="/privacy" className="hover:text-slate-300">
+          Privacy
+        </Link>
       </footer>
     </div>
   )

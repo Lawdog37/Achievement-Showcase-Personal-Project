@@ -11,6 +11,7 @@ export interface RememberedPlayer {
 export interface KeyValueStore {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
+  removeItem(key: string): void
 }
 
 const KEY = 'achievement-showcase:last-player'
@@ -28,6 +29,14 @@ export function rememberPlayer(player: RememberedPlayer, storage = browserStorag
     storage?.setItem(KEY, JSON.stringify(player))
   } catch {
     // Storage full or blocked: not important, skip it
+  }
+}
+
+export function forgetPlayer(storage = browserStorage()) {
+  try {
+    storage?.removeItem(KEY)
+  } catch {
+    // Storage blocked: nothing to forget
   }
 }
 
