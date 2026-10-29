@@ -230,3 +230,6 @@ data/
 
 # The Python template's "lib/" rule above would also hide frontend/src/lib
 !frontend/src/lib/
+
+#Ignoring Backup Test
+backup*.sql

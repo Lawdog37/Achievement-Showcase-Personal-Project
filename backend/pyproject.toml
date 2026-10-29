@@ -9,6 +9,7 @@ dependencies = [
     "fastapi[standard]>=0.161",
     "httpx>=0.28",
     "itsdangerous>=2.2",  # signs the login cookie so it can't be forged
+    "psycopg[binary]>=3.3",  # lets SQLAlchemy talk to Postgres
     "python-dotenv>=1.2",
     "sqlalchemy>=2.0",
 ]
